@@ -1,45 +1,105 @@
 package com.example.backend.service;
 
 import com.example.backend.domain.Game;
+import com.example.backend.domain.Guess;
+import com.example.backend.domain.LetterResult;
+import com.example.backend.domain.WordleEvaluator;
+import com.example.backend.dictionary.WordDictionary;
+import com.example.backend.exception.GameNotFoundException;
+import com.example.backend.exception.InvalidGuessException;
+import com.example.backend.persistence.GameEntity;
+import com.example.backend.persistence.GameMapper;
+import com.example.backend.persistence.GameRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 public class GameService {
     private static final int MAX_ATTEMPTS = 6;
-    private final List<String> wordPool = List.of(
-            "CRANE",
-            "SLATE",
-            "STARE",
-            "PLANT",
-            "HOUSE",
-            "BRICK"
-    );
+    private final WordleEvaluator wordleEvaluator = new WordleEvaluator();
+    private final WordDictionary wordDictionary;
+    private final GameRepository gameRepository;
+    private final GameMapper gameMapper;
 
-    private final Map<UUID, Game> games = new ConcurrentHashMap<>();
+    public GameService(
+            WordDictionary wordDictionary,
+            GameRepository gameRepository,
+            GameMapper gameMapper
+    ) {
+        this.wordDictionary = wordDictionary;
+        this.gameRepository = gameRepository;
+        this.gameMapper = gameMapper;
+    }
 
+    @Transactional
     public Game createGame() {
-        String answer = chooseAnswer();
+        String answer = wordDictionary.randomWord();
 
         Game game = new Game(UUID.randomUUID(), answer, MAX_ATTEMPTS, Instant.now());
 
-        games.put(game.getId(), game);
+        gameRepository.save(gameMapper.toEntity(game));
+
         return game;
     }
 
+    @Transactional(readOnly = true)
     public Optional<Game> findGame(UUID gameId) {
-        return Optional.ofNullable(games.get(gameId));
+        return gameRepository.findById(gameId).map(gameMapper::toDomain);
     }
 
-    private String chooseAnswer() {
-        int randomIndex = ThreadLocalRandom.current().nextInt(wordPool.size());
-        return wordPool.get(randomIndex);
+    @Transactional(readOnly = true)
+    public Game getGame(UUID gameId) {
+        return gameMapper.toDomain(loadGameEntity(gameId));
+    }
+
+    @Transactional
+    public Game submitGuess(UUID gameId, String word) {
+        String normalizedWord = validateAndNormalizeGuess(word);
+
+        GameEntity gameEntity = gameRepository.findByIdForPlay(gameId)
+                .orElseThrow(() -> new GameNotFoundException("Game not found."));
+
+        Game game = gameMapper.toDomain(gameEntity);
+
+        List<LetterResult> result = wordleEvaluator.evaluate(
+                game.getAnswer(),
+                normalizedWord
+        );
+
+        Guess guess = new Guess(normalizedWord, result);
+
+        game.addGuess(guess);
+
+        gameMapper.applyTo(gameEntity, game);
+        gameRepository.save(gameEntity);
+
+        return game;
+    }
+
+    private GameEntity loadGameEntity(UUID gameId) {
+        return gameRepository.findById(gameId)
+                .orElseThrow(() -> new GameNotFoundException("Game not found."));
+    }
+
+    private String validateAndNormalizeGuess(String word) {
+        if (word == null || !word.matches("[A-Za-z]{5}")) {
+            throw new InvalidGuessException(
+                    "Guess must contain exactly 5 letters."
+            );
+        }
+
+        String normalizedWord = word.toUpperCase(Locale.ROOT);
+
+        if (!wordDictionary.contains(normalizedWord)) {
+            throw new InvalidGuessException("Guess is not in the dictionary.");
+        }
+
+        return normalizedWord;
     }
 }

@@ -10,6 +10,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
@@ -34,6 +35,7 @@ import static org.assertj.core.api.Assertions.catchThrowable;
  * same path the application takes after a restart.
  */
 @SpringBootTest
+@ActiveProfiles("test")
 class GamePersistenceIntegrationTest {
 
     @Autowired

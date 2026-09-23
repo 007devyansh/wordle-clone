@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Wordle",
-  description: "An unlimited Wordle game",
+  title: "Wrdl",
+  description: "An unlimited five-letter word game",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -180,7 +180,7 @@ export default function Home() {
             <p className="text-xs font-semibold tracking-[0.28em] text-emerald-400">
               UNLIMITED MODE
             </p>
-            <h1 className="mt-1 text-3xl font-black tracking-[0.18em]">WORDLE</h1>
+            <h1 className="mt-1 text-3xl font-black tracking-[0.18em]">WRDL</h1>
           </div>
           <button
             type="button"

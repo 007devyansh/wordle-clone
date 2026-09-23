@@ -2,6 +2,7 @@
 
 ## Product and architecture decisions
 
+- Players see the name **Wrdl** (browser title, description and page heading). Internally the project stays `wordle-clone`: repo, packages, class names, database names and environment variables are not renamed. Avoid "Wordle" in anything players see, since the New York Times owns the trademark.
 - This is an **unlimited**, anonymous, single-player Wordle game. Every new game receives a random backend-selected answer; there is no daily puzzle mode.
 - The Next.js frontend owns UI state only (typed input, board rendering, animations, keyboard state, and the current `gameId` in local storage).
 - The Spring Boot backend is authoritative for game state (answer, guesses, attempts, evaluation, and win/loss status).

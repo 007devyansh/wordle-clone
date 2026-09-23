@@ -9,17 +9,25 @@ class WordDictionaryTest {
     private final WordDictionary dictionary = new WordDictionary();
 
     @Test
-    void contains_a_known_word() {
-        assertThat(dictionary.contains("CRANE")).isTrue();
+    void accepts_a_common_word_as_a_guess() {
+        assertThat(dictionary.isAllowedGuess("CRANE")).isTrue();
     }
 
     @Test
-    void does_not_contain_an_unknown_word() {
-        assertThat(dictionary.contains("QWERT")).isFalse();
+    void accepts_a_valid_word_that_is_never_an_answer() {
+        // A plural: real Wordle accepts it as a guess but never picks it as the answer.
+        assertThat(dictionary.isAllowedGuess("BOATS")).isTrue();
     }
 
     @Test
-    void chooses_an_answer_from_the_dictionary() {
-        assertThat(dictionary.contains(dictionary.randomWord())).isTrue();
+    void rejects_a_made_up_word() {
+        assertThat(dictionary.isAllowedGuess("QWERT")).isFalse();
+    }
+
+    @Test
+    void every_chosen_answer_is_an_allowed_guess() {
+        for (int i = 0; i < 100; i++) {
+            assertThat(dictionary.isAllowedGuess(dictionary.randomAnswer())).isTrue();
+        }
     }
 }

@@ -39,7 +39,7 @@ public class GameService {
 
     @Transactional
     public Game createGame() {
-        String answer = wordDictionary.randomWord();
+        String answer = wordDictionary.randomAnswer();
 
         Game game = new Game(UUID.randomUUID(), answer, MAX_ATTEMPTS, Instant.now());
 
@@ -96,7 +96,7 @@ public class GameService {
 
         String normalizedWord = word.toUpperCase(Locale.ROOT);
 
-        if (!wordDictionary.contains(normalizedWord)) {
+        if (!wordDictionary.isAllowedGuess(normalizedWord)) {
             throw new InvalidGuessException("Guess is not in the dictionary.");
         }
 
